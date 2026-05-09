@@ -78,12 +78,18 @@ def encrypt_file():
 
     final_data = salt + encrypted
 
-    encoded = base64.b64encode(final_data)
+    encoded = base64.b64encode(final_data).decode("utf-8")
+
+    wrapped_data = (
+        "-- Start of encrypted data --\n"
+        + encoded
+        + "\n-- End of encrypted data --"
+    )
 
     output_file = path.stem + "_encrypted.txt"
 
-    with open(output_file, "wb") as f:
-        f.write(encoded)
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(wrapped_data)
 
     print(f"\nEncrypted file saved as: {output_file}")
 
@@ -105,8 +111,21 @@ def decrypt_file():
     password = input("Enter decryption code: ")
 
     try:
-        with open(path, "rb") as f:
-            encoded = f.read()
+        with open(path, "r", encoding="utf-8") as f:
+            file_content = f.read()
+
+        start_marker = "-- Start of encrypted data --"
+        end_marker = "-- End of encrypted data --"
+
+        start_index = file_content.find(start_marker)
+        end_index = file_content.find(end_marker)
+
+        if start_index == -1 or end_index == -1:
+            raise ValueError("Marker not found")
+
+        encoded = file_content[
+            start_index + len(start_marker):end_index
+        ].strip()
 
         data = base64.b64decode(encoded)
 
@@ -149,3 +168,5 @@ if __name__ == "__main__":
 
     else:
         print("Unknown mode.")
+    
+    input("\nPress ENTER to exit...")
